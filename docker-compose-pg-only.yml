@@ -1,15 +1,29 @@
 version: '3.8'
 services:
+  app:
+    build: ./app .
+    depends_on:
+      - db
+    networks:
+      - local
+    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; python data_challenge.py'
   db:
     image: postgres:14.1-alpine
+    container_name: data-challenge-db
     restart: always
+    networks: 
+      - local
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     ports:
-      - '5444:5432'
+      - '5432:5432'
     volumes:
-      - db:/var/lib/postgresql/data      
+      - db:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/create_tables.sql
+networks:
+  local:
+    driver: bridge
 volumes:
   db:
     driver: local
